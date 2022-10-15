@@ -2,9 +2,9 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
 let particleArray = [];
-
+let adjustX = 12;
+let adjustY = 2;
 // Handle Mouse
 const mouse = {
 	x: null,
@@ -18,8 +18,8 @@ window.addEventListener('mousemove', e => {
 });
 
 ctx.fillStyle = 'white';
-ctx.font = '30px Verdana';
-ctx.fillText('M', 0, 30);
+ctx.font = '36px Verdana';
+ctx.fillText('Aa', 0, 30);
 const textCoordinates = ctx.getImageData(0, 0, 100, 100);
 
 class Particle {
@@ -29,11 +29,11 @@ class Particle {
 		this.size = 3;
 		this.baseX = this.x;
 		this.baseY = this.y;
-		this.density = Math.random() * 40 + 5;
+		this.density = Math.random() * 50 + 5;
 	}
 
 	draw() {
-		ctx.fillStyle = 'blue';
+		ctx.fillStyle = 'rgba(50, 230, 218, 1)';
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
 		ctx.closePath();
@@ -69,13 +69,42 @@ class Particle {
 
 const init = () => {
 	particleArray = [];
-	for (let i = 0; i < 1000; i++) {
-		let x = Math.random() * canvas.width;
-		let y = Math.random() * canvas.height;
-		particleArray.push(new Particle(x, y));
+
+	for (let y = 0, y2 = textCoordinates.height; y < y2; y++) {
+		for (let x = 0, x2 = textCoordinates.width; x < x2; x++) {
+			if (
+				textCoordinates.data[y * 4 * textCoordinates.width + x * 4 + 3] > 128
+			) {
+				let positionX = x + adjustX;
+				let positionY = y + adjustY;
+				particleArray.push(new Particle(positionX * 20, positionY * 20));
+			}
+		}
 	}
 };
 init();
+
+const connect = () => {
+	let opacityValue = 1;
+	for (let a = 0; a < particleArray.length; a++) {
+		for (let b = a; b < particleArray.length; b++) {
+			let dx = particleArray[a].x - particleArray[b].x;
+			let dy = particleArray[a].y - particleArray[b].y;
+			let distance = Math.sqrt(dx * dx + dy * dy);
+
+			opacityValue = 0.1;
+			ctx.strokeStyle = 'rgba(50, 230, 218,' + opacityValue + ')';
+
+			if (distance < 50) {
+				ctx.lineWidth = '3';
+				ctx.beginPath();
+				ctx.moveTo(particleArray[a].x, particleArray[a].y);
+				ctx.lineTo(particleArray[b].x, particleArray[b].y);
+				ctx.stroke();
+			}
+		}
+	}
+};
 
 const animate = () => {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -83,6 +112,7 @@ const animate = () => {
 		particleArray[i].draw();
 		particleArray[i].udpate();
 	}
+	connect();
 	requestAnimationFrame(animate);
 };
 animate();
